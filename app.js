@@ -1,4 +1,5 @@
 //jshint esversion:6
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
@@ -20,8 +21,7 @@ const userSchema = new mongoose.Schema({
     secretword: String
 });
 
-const secret = "thisisourlittlesecret";
-userSchema.plugin(encrypt, {secret: secret, encryptedFields: ["secretword"]}) // encryptedFields ensures that only the secretword is encrypted, rather than the whole database
+userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ["secretword"]}) // encryptedFields ensures that only the secretword is encrypted, rather than the whole database
 
 const User = new mongoose.model("User", userSchema);
 
