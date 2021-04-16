@@ -4,7 +4,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const md5 = require("md5");
+// const md5 = require("md5");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
+
 
 const app = express();
 
@@ -34,21 +38,25 @@ app.get("/login", function(req, res){
 });
 
 app.post("/login", function(req, res){
-    const username = req.body.username;
-    const secretword = md5(req.body.secretword);
+    
+        const username = req.body.username;
+        const secretword = req.body.secretword;
 
-    User.findOne({email: username}, function(err, foundUser){
-        if (err){
-            console.log(err);
-        } else {
-            if (foundUser) {
-                if(foundUser.secretword === secretword) {
-                    res.render("secrets");
+        User.findOne({email: username}, function(err, foundUser){
+            if (err){
+                console.log(err);
+            } else {
+                if (foundUser) {
+                    bcrypt.compare(secretword, foundUser.secretword, function(err, result){
+                        if (result === true){
+                            res.render("secrets");
+                        }    
+                    })
                 }
-            }
-        }      
-    })
-})
+            }                         
+        })
+    
+});
 
 // /register route
 app.get("/register", function(req, res){
@@ -56,19 +64,24 @@ app.get("/register", function(req, res){
 });
 
 app.post("/register", function(req, res){
-    
-    const newUser = new User({
-        email: req.body.username,
-        secretword: md5(req.body.secretword)
-    });
 
-    newUser.save(function(err){
-        if (err) {
-            console.log(err);
-        } else {
-            res.render("secrets");
-        }
+    bcrypt.hash(req.body.secretword, saltRounds, function(err, hash) {
+
+        const newUser = new User({
+            email: req.body.username,
+            secretword: hash
+        });
+    
+        newUser.save(function(err){
+            if (err) {
+                console.log(err);
+            } else {
+                res.render("secrets");
+            }
+        });
     });
+    
+    
 });
 
 app.listen(3000, function(){
